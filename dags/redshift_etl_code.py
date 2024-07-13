@@ -147,10 +147,11 @@ def load_move_data(execution_date):
     WHERE dateid >= date '{execution_date}' and dateid < dateadd(month, 1, '{execution_date}')
     ;
     """
+    #hide IAM role
     copy_moves_staging_query = f"""
     COPY "dev"."chess_project_staging"."move"
     FROM 's3://chess-coach-de-project/{year_month}_moves.csv' 
-    IAM_ROLE 'arn:aws:iam::905418173427:role/service-role/AmazonRedshift-CommandsAccessRole-20240610T231914' 
+    IAM_ROLE 'arn:aws:iam::905418173427:role/service-role/AmazonRedshift-CommandsAccessRole-20240610T231914'
     FORMAT AS CSV 
     DELIMITER ',' 
     QUOTE '"' 
