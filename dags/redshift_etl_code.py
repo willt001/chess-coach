@@ -36,6 +36,10 @@ def load_game_data(execution_date):
     password=my_password,
     )
 
+    #IAM ARN stored in Airflow connections list
+    connection = BaseHook.get_connection('chess_project_iam')
+    iam_arn = connection.login
+
     delete_games_staging_query = f"""
     DELETE FROM "dev"."chess_project_staging"."game"
     WHERE dateid >= date '{execution_date}' and dateid < dateadd(month, 1, '{execution_date}')
@@ -43,7 +47,7 @@ def load_game_data(execution_date):
     copy_games_staging_query = f"""
     COPY "dev"."chess_project_staging"."game"
     FROM 's3://chess-coach-de-project/{year_month}_games.csv' 
-    IAM_ROLE 'arn:aws:iam::905418173427:role/service-role/AmazonRedshift-CommandsAccessRole-20240610T231914' 
+    IAM_ROLE '{iam_arn}' 
     FORMAT AS CSV 
     DELIMITER ',' 
     QUOTE '"' 
@@ -142,16 +146,19 @@ def load_move_data(execution_date):
     password=my_password,
     )
 
+    #IAM ARN stored in Airflow connections list
+    connection = BaseHook.get_connection('chess_project_iam')
+    iam_arn = connection.login
+
     delete_moves_staging_query = f"""
     DELETE FROM "dev"."chess_project_staging"."move"
     WHERE dateid >= date '{execution_date}' and dateid < dateadd(month, 1, '{execution_date}')
     ;
     """
-    #hide IAM role
     copy_moves_staging_query = f"""
     COPY "dev"."chess_project_staging"."move"
     FROM 's3://chess-coach-de-project/{year_month}_moves.csv' 
-    IAM_ROLE 'arn:aws:iam::905418173427:role/service-role/AmazonRedshift-CommandsAccessRole-20240610T231914'
+    IAM_ROLE '{iam_arn}'
     FORMAT AS CSV 
     DELIMITER ',' 
     QUOTE '"' 
