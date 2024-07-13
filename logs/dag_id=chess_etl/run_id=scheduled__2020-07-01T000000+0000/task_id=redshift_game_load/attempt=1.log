@@ -1,0 +1,81 @@
+[2024-07-07T18:18:16.951+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2024-07-07T18:18:16.966+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: chess_etl.redshift_game_load scheduled__2020-07-01T00:00:00+00:00 [queued]>
+[2024-07-07T18:18:16.973+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: chess_etl.redshift_game_load scheduled__2020-07-01T00:00:00+00:00 [queued]>
+[2024-07-07T18:18:16.974+0000] {taskinstance.py:2306} INFO - Starting attempt 1 of 1
+[2024-07-07T18:18:16.983+0000] {taskinstance.py:2330} INFO - Executing <Task(PythonOperator): redshift_game_load> on 2020-07-01 00:00:00+00:00
+[2024-07-07T18:18:16.989+0000] {warnings.py:110} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:61: DeprecationWarning: This process (pid=1137) is multi-threaded, use of fork() may lead to deadlocks in the child.
+  pid = os.fork()
+
+[2024-07-07T18:18:16.990+0000] {standard_task_runner.py:63} INFO - Started process 1141 to run task
+[2024-07-07T18:18:16.990+0000] {standard_task_runner.py:90} INFO - Running: ['***', 'tasks', 'run', 'chess_etl', 'redshift_game_load', 'scheduled__2020-07-01T00:00:00+00:00', '--job-id', '427', '--pool', 'default_pool', '--raw', '--subdir', 'DAGS_FOLDER/chess_dag.py', '--cfg-path', '/tmp/tmpst4z5w0o']
+[2024-07-07T18:18:16.991+0000] {standard_task_runner.py:91} INFO - Job 427: Subtask redshift_game_load
+[2024-07-07T18:18:17.029+0000] {task_command.py:426} INFO - Running <TaskInstance: chess_etl.redshift_game_load scheduled__2020-07-01T00:00:00+00:00 [running]> on host cb919e35e0e9
+[2024-07-07T18:18:17.096+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='chess_etl' AIRFLOW_CTX_TASK_ID='redshift_game_load' AIRFLOW_CTX_EXECUTION_DATE='2020-07-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2020-07-01T00:00:00+00:00'
+[2024-07-07T18:18:17.097+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2024-07-07T18:18:17.098+0000] {warnings.py:110} WARNING - /home/***/.local/lib/python3.12/site-packages/***/utils/context.py:320: AirflowContextDeprecationWarning: Accessing 'execution_date' from the template is deprecated and will be removed in a future version. Please use 'data_interval_start' or 'logical_date' instead.
+  warnings.warn(_create_deprecation_warning(k, replacements))
+
+[2024-07-07T18:18:17.109+0000] {base.py:84} INFO - Using connection ID 'chess_project_s3' for task execution.
+[2024-07-07T18:18:17.982+0000] {base.py:84} INFO - Using connection ID 'chess_project_redshift' for task execution.
+[2024-07-07T18:18:20.347+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2024-07-07T18:18:20.347+0000] {taskinstance.py:2905} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 465, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 432, in _execute_callable
+    return execute_callable(context=context, **execute_callable_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/baseoperator.py", line 400, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 235, in execute
+    return_value = self.execute_callable()
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 252, in execute_callable
+    return self.python_callable(*self.op_args, **self.op_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/dags/chess_dag.py", line 27, in redshift_game_task
+    return load_game_data(execution_date)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/dags/redshift_etl_code.py", line 107, in load_game_data
+    cursor.execute(drop_games_staging_query)
+  File "/home/airflow/.local/lib/python3.12/site-packages/redshift_connector/cursor.py", line 248, in execute
+    raise e
+  File "/home/airflow/.local/lib/python3.12/site-packages/redshift_connector/cursor.py", line 241, in execute
+    self._c.execute(self, operation, args)
+  File "/home/airflow/.local/lib/python3.12/site-packages/redshift_connector/core.py", line 1987, in execute
+    self.handle_messages(cursor)
+  File "/home/airflow/.local/lib/python3.12/site-packages/redshift_connector/core.py", line 2194, in handle_messages
+    raise self.error
+redshift_connector.error.ProgrammingError: {'S': 'ERROR', 'C': 'XX000', 'M': 'could not open relation with OID 200395', 'F': '../src/pg/src/backend/access/heap/heapam.c', 'L': '636', 'R': 'local_relation_open'}
+[2024-07-07T18:18:20.356+0000] {taskinstance.py:1206} INFO - Marking task as FAILED. dag_id=chess_etl, task_id=redshift_game_load, run_id=scheduled__2020-07-01T00:00:00+00:00, execution_date=20200701T000000, start_date=20240707T181816, end_date=20240707T181820
+[2024-07-07T18:18:20.366+0000] {standard_task_runner.py:110} ERROR - Failed to execute job 427 for task redshift_game_load ({'S': 'ERROR', 'C': 'XX000', 'M': 'could not open relation with OID 200395', 'F': '../src/pg/src/backend/access/heap/heapam.c', 'L': '636', 'R': 'local_relation_open'}; 1141)
+[2024-07-07T18:18:20.413+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 1
+[2024-07-07T18:18:20.427+0000] {taskinstance.py:3498} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2024-07-07T18:18:20.428+0000] {local_task_job_runner.py:222} INFO - ::endgroup::
+[2024-07-07T23:42:02.881+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2024-07-07T23:42:02.897+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: chess_etl.redshift_game_load scheduled__2020-07-01T00:00:00+00:00 [queued]>
+[2024-07-07T23:42:02.902+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: chess_etl.redshift_game_load scheduled__2020-07-01T00:00:00+00:00 [queued]>
+[2024-07-07T23:42:02.903+0000] {taskinstance.py:2306} INFO - Starting attempt 1 of 1
+[2024-07-07T23:42:02.911+0000] {taskinstance.py:2330} INFO - Executing <Task(PythonOperator): redshift_game_load> on 2020-07-01 00:00:00+00:00
+[2024-07-07T23:42:02.919+0000] {warnings.py:110} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:61: DeprecationWarning: This process (pid=16546) is multi-threaded, use of fork() may lead to deadlocks in the child.
+  pid = os.fork()
+
+[2024-07-07T23:42:02.920+0000] {standard_task_runner.py:63} INFO - Started process 16548 to run task
+[2024-07-07T23:42:02.920+0000] {standard_task_runner.py:90} INFO - Running: ['***', 'tasks', 'run', 'chess_etl', 'redshift_game_load', 'scheduled__2020-07-01T00:00:00+00:00', '--job-id', '630', '--raw', '--subdir', 'DAGS_FOLDER/chess_dag.py', '--cfg-path', '/tmp/tmpm3w_249v']
+[2024-07-07T23:42:02.921+0000] {standard_task_runner.py:91} INFO - Job 630: Subtask redshift_game_load
+[2024-07-07T23:42:02.959+0000] {task_command.py:426} INFO - Running <TaskInstance: chess_etl.redshift_game_load scheduled__2020-07-01T00:00:00+00:00 [running]> on host 6569f5155f0c
+[2024-07-07T23:42:03.020+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='chess_etl' AIRFLOW_CTX_TASK_ID='redshift_game_load' AIRFLOW_CTX_EXECUTION_DATE='2020-07-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2020-07-01T00:00:00+00:00'
+[2024-07-07T23:42:03.022+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2024-07-07T23:42:03.023+0000] {warnings.py:110} WARNING - /home/***/.local/lib/python3.12/site-packages/***/utils/context.py:320: AirflowContextDeprecationWarning: Accessing 'execution_date' from the template is deprecated and will be removed in a future version. Please use 'data_interval_start' or 'logical_date' instead.
+  warnings.warn(_create_deprecation_warning(k, replacements))
+
+[2024-07-07T23:42:03.029+0000] {base.py:84} INFO - Using connection ID 'chess_project_s3' for task execution.
+[2024-07-07T23:42:03.730+0000] {base.py:84} INFO - Using connection ID 'chess_project_redshift' for task execution.
+[2024-07-07T23:42:11.826+0000] {python.py:237} INFO - Done. Returned value was: None
+[2024-07-07T23:42:11.826+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2024-07-07T23:42:11.833+0000] {taskinstance.py:1206} INFO - Marking task as SUCCESS. dag_id=chess_etl, task_id=redshift_game_load, run_id=scheduled__2020-07-01T00:00:00+00:00, execution_date=20200701T000000, start_date=20240707T234202, end_date=20240707T234211
+[2024-07-07T23:42:11.865+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 0
+[2024-07-07T23:42:11.879+0000] {taskinstance.py:3498} INFO - 1 downstream tasks scheduled from follow-on schedule check
+[2024-07-07T23:42:11.881+0000] {local_task_job_runner.py:222} INFO - ::endgroup::

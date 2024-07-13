@@ -1,0 +1,148 @@
+[2024-06-03T17:38:42.375+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2024-06-03T17:38:42.389+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: chess_etl.games_etl scheduled__2020-04-01T00:00:00+00:00 [queued]>
+[2024-06-03T17:38:42.395+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: chess_etl.games_etl scheduled__2020-04-01T00:00:00+00:00 [queued]>
+[2024-06-03T17:38:42.395+0000] {taskinstance.py:2306} INFO - Starting attempt 1 of 1
+[2024-06-03T17:38:42.404+0000] {taskinstance.py:2330} INFO - Executing <Task(PythonOperator): games_etl> on 2020-04-01 00:00:00+00:00
+[2024-06-03T17:38:42.409+0000] {warnings.py:110} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:61: DeprecationWarning: This process (pid=161) is multi-threaded, use of fork() may lead to deadlocks in the child.
+  pid = os.fork()
+
+[2024-06-03T17:38:42.410+0000] {standard_task_runner.py:63} INFO - Started process 163 to run task
+[2024-06-03T17:38:42.410+0000] {standard_task_runner.py:90} INFO - Running: ['***', 'tasks', 'run', 'chess_etl', 'games_etl', 'scheduled__2020-04-01T00:00:00+00:00', '--job-id', '36', '--raw', '--subdir', 'DAGS_FOLDER/chess_dag.py', '--cfg-path', '/tmp/tmp4c86s1dk']
+[2024-06-03T17:38:42.411+0000] {standard_task_runner.py:91} INFO - Job 36: Subtask games_etl
+[2024-06-03T17:38:42.441+0000] {task_command.py:426} INFO - Running <TaskInstance: chess_etl.games_etl scheduled__2020-04-01T00:00:00+00:00 [running]> on host a5a4421409ea
+[2024-06-03T17:38:42.495+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='chess_etl' AIRFLOW_CTX_TASK_ID='games_etl' AIRFLOW_CTX_EXECUTION_DATE='2020-04-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2020-04-01T00:00:00+00:00'
+[2024-06-03T17:38:42.496+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2024-06-03T17:38:42.497+0000] {warnings.py:110} WARNING - /home/***/.local/lib/python3.12/site-packages/***/utils/context.py:320: AirflowContextDeprecationWarning: Accessing 'execution_date' from the template is deprecated and will be removed in a future version. Please use 'data_interval_start' or 'logical_date' instead.
+  warnings.warn(_create_deprecation_warning(k, replacements))
+
+[2024-06-03T17:38:43.980+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2024-06-03T17:38:43.985+0000] {taskinstance.py:2905} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 465, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 432, in _execute_callable
+    return execute_callable(context=context, **execute_callable_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/baseoperator.py", line 400, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 235, in execute
+    return_value = self.execute_callable()
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 252, in execute_callable
+    return self.python_callable(*self.op_args, **self.op_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/dags/chess_dag.py", line 19, in games_etl_task
+    return get_monthly_games(execution_date)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/dags/chess_etl_code.py", line 60, in get_monthly_games
+    connection = BaseHook.get_connection('chess_project_s3')
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/hooks/base.py", line 83, in get_connection
+    conn = Connection.get_connection_from_secrets(conn_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/connection.py", line 519, in get_connection_from_secrets
+    raise AirflowNotFoundException(f"The conn_id `{conn_id}` isn't defined")
+airflow.exceptions.AirflowNotFoundException: The conn_id `chess_project_s3` isn't defined
+[2024-06-03T17:38:43.991+0000] {taskinstance.py:1206} INFO - Marking task as FAILED. dag_id=chess_etl, task_id=games_etl, run_id=scheduled__2020-04-01T00:00:00+00:00, execution_date=20200401T000000, start_date=20240603T173842, end_date=20240603T173843
+[2024-06-03T17:38:43.999+0000] {standard_task_runner.py:110} ERROR - Failed to execute job 36 for task games_etl (The conn_id `chess_project_s3` isn't defined; 163)
+[2024-06-03T17:38:44.027+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 1
+[2024-06-03T17:38:44.045+0000] {taskinstance.py:3498} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2024-06-03T17:38:44.048+0000] {local_task_job_runner.py:222} INFO - ::endgroup::
+[2024-06-03T17:45:36.222+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2024-06-03T17:45:36.236+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: chess_etl.games_etl scheduled__2020-04-01T00:00:00+00:00 [queued]>
+[2024-06-03T17:45:36.242+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: chess_etl.games_etl scheduled__2020-04-01T00:00:00+00:00 [queued]>
+[2024-06-03T17:45:36.243+0000] {taskinstance.py:2306} INFO - Starting attempt 1 of 1
+[2024-06-03T17:45:36.252+0000] {taskinstance.py:2330} INFO - Executing <Task(PythonOperator): games_etl> on 2020-04-01 00:00:00+00:00
+[2024-06-03T17:45:36.258+0000] {warnings.py:110} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:61: DeprecationWarning: This process (pid=235) is multi-threaded, use of fork() may lead to deadlocks in the child.
+  pid = os.fork()
+
+[2024-06-03T17:45:36.259+0000] {standard_task_runner.py:63} INFO - Started process 237 to run task
+[2024-06-03T17:45:36.260+0000] {standard_task_runner.py:90} INFO - Running: ['***', 'tasks', 'run', 'chess_etl', 'games_etl', 'scheduled__2020-04-01T00:00:00+00:00', '--job-id', '94', '--raw', '--subdir', 'DAGS_FOLDER/chess_dag.py', '--cfg-path', '/tmp/tmpak_33hot']
+[2024-06-03T17:45:36.261+0000] {standard_task_runner.py:91} INFO - Job 94: Subtask games_etl
+[2024-06-03T17:45:36.293+0000] {task_command.py:426} INFO - Running <TaskInstance: chess_etl.games_etl scheduled__2020-04-01T00:00:00+00:00 [running]> on host f55fff24b127
+[2024-06-03T17:45:36.355+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='chess_etl' AIRFLOW_CTX_TASK_ID='games_etl' AIRFLOW_CTX_EXECUTION_DATE='2020-04-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2020-04-01T00:00:00+00:00'
+[2024-06-03T17:45:36.357+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2024-06-03T17:45:36.358+0000] {warnings.py:110} WARNING - /home/***/.local/lib/python3.12/site-packages/***/utils/context.py:320: AirflowContextDeprecationWarning: Accessing 'execution_date' from the template is deprecated and will be removed in a future version. Please use 'data_interval_start' or 'logical_date' instead.
+  warnings.warn(_create_deprecation_warning(k, replacements))
+
+[2024-06-03T17:45:36.667+0000] {base.py:84} INFO - Using connection ID 'chess_project_s3' for task execution.
+[2024-06-03T17:45:37.473+0000] {python.py:237} INFO - Done. Returned value was: None
+[2024-06-03T17:45:37.474+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2024-06-03T17:45:37.482+0000] {taskinstance.py:1206} INFO - Marking task as SUCCESS. dag_id=chess_etl, task_id=games_etl, run_id=scheduled__2020-04-01T00:00:00+00:00, execution_date=20200401T000000, start_date=20240603T174536, end_date=20240603T174537
+[2024-06-03T17:45:37.515+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 0
+[2024-06-03T17:45:37.529+0000] {taskinstance.py:3498} INFO - 1 downstream tasks scheduled from follow-on schedule check
+[2024-06-03T17:45:37.530+0000] {local_task_job_runner.py:222} INFO - ::endgroup::
+[2024-06-08T14:11:04.061+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2024-06-08T14:11:04.075+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: chess_etl.games_etl scheduled__2020-04-01T00:00:00+00:00 [queued]>
+[2024-06-08T14:11:04.080+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: chess_etl.games_etl scheduled__2020-04-01T00:00:00+00:00 [queued]>
+[2024-06-08T14:11:04.080+0000] {taskinstance.py:2306} INFO - Starting attempt 1 of 1
+[2024-06-08T14:11:04.089+0000] {taskinstance.py:2330} INFO - Executing <Task(PythonOperator): games_etl> on 2020-04-01 00:00:00+00:00
+[2024-06-08T14:11:04.095+0000] {warnings.py:110} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:61: DeprecationWarning: This process (pid=251) is multi-threaded, use of fork() may lead to deadlocks in the child.
+  pid = os.fork()
+
+[2024-06-08T14:11:04.096+0000] {standard_task_runner.py:63} INFO - Started process 253 to run task
+[2024-06-08T14:11:04.097+0000] {standard_task_runner.py:90} INFO - Running: ['***', 'tasks', 'run', 'chess_etl', 'games_etl', 'scheduled__2020-04-01T00:00:00+00:00', '--job-id', '234', '--raw', '--subdir', 'DAGS_FOLDER/chess_dag.py', '--cfg-path', '/tmp/tmpi9n7j8ow']
+[2024-06-08T14:11:04.097+0000] {standard_task_runner.py:91} INFO - Job 234: Subtask games_etl
+[2024-06-08T14:11:04.128+0000] {task_command.py:426} INFO - Running <TaskInstance: chess_etl.games_etl scheduled__2020-04-01T00:00:00+00:00 [running]> on host 3c9d89bfdaf1
+[2024-06-08T14:11:04.184+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='chess_etl' AIRFLOW_CTX_TASK_ID='games_etl' AIRFLOW_CTX_EXECUTION_DATE='2020-04-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2020-04-01T00:00:00+00:00'
+[2024-06-08T14:11:04.185+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2024-06-08T14:11:04.186+0000] {warnings.py:110} WARNING - /home/***/.local/lib/python3.12/site-packages/***/utils/context.py:320: AirflowContextDeprecationWarning: Accessing 'execution_date' from the template is deprecated and will be removed in a future version. Please use 'data_interval_start' or 'logical_date' instead.
+  warnings.warn(_create_deprecation_warning(k, replacements))
+
+[2024-06-08T14:11:05.825+0000] {base.py:84} INFO - Using connection ID 'chess_project_s3' for task execution.
+[2024-06-08T14:11:06.650+0000] {python.py:237} INFO - Done. Returned value was: None
+[2024-06-08T14:11:06.651+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2024-06-08T14:11:06.657+0000] {taskinstance.py:1206} INFO - Marking task as SUCCESS. dag_id=chess_etl, task_id=games_etl, run_id=scheduled__2020-04-01T00:00:00+00:00, execution_date=20200401T000000, start_date=20240608T141104, end_date=20240608T141106
+[2024-06-08T14:11:06.676+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 0
+[2024-06-08T14:11:06.689+0000] {taskinstance.py:3498} INFO - 1 downstream tasks scheduled from follow-on schedule check
+[2024-06-08T14:11:06.691+0000] {local_task_job_runner.py:222} INFO - ::endgroup::
+[2024-06-08T14:52:32.977+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2024-06-08T14:52:32.990+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: chess_etl.games_etl scheduled__2020-04-01T00:00:00+00:00 [queued]>
+[2024-06-08T14:52:32.997+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: chess_etl.games_etl scheduled__2020-04-01T00:00:00+00:00 [queued]>
+[2024-06-08T14:52:32.998+0000] {taskinstance.py:2306} INFO - Starting attempt 1 of 1
+[2024-06-08T14:52:33.008+0000] {taskinstance.py:2330} INFO - Executing <Task(PythonOperator): games_etl> on 2020-04-01 00:00:00+00:00
+[2024-06-08T14:52:33.013+0000] {warnings.py:110} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:61: DeprecationWarning: This process (pid=368) is multi-threaded, use of fork() may lead to deadlocks in the child.
+  pid = os.fork()
+
+[2024-06-08T14:52:33.015+0000] {standard_task_runner.py:63} INFO - Started process 370 to run task
+[2024-06-08T14:52:33.015+0000] {standard_task_runner.py:90} INFO - Running: ['***', 'tasks', 'run', 'chess_etl', 'games_etl', 'scheduled__2020-04-01T00:00:00+00:00', '--job-id', '270', '--raw', '--subdir', 'DAGS_FOLDER/chess_dag.py', '--cfg-path', '/tmp/tmp_w_svtc2']
+[2024-06-08T14:52:33.016+0000] {standard_task_runner.py:91} INFO - Job 270: Subtask games_etl
+[2024-06-08T14:52:33.049+0000] {task_command.py:426} INFO - Running <TaskInstance: chess_etl.games_etl scheduled__2020-04-01T00:00:00+00:00 [running]> on host bf0ade909435
+[2024-06-08T14:52:33.115+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='chess_etl' AIRFLOW_CTX_TASK_ID='games_etl' AIRFLOW_CTX_EXECUTION_DATE='2020-04-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2020-04-01T00:00:00+00:00'
+[2024-06-08T14:52:33.117+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2024-06-08T14:52:33.118+0000] {warnings.py:110} WARNING - /home/***/.local/lib/python3.12/site-packages/***/utils/context.py:320: AirflowContextDeprecationWarning: Accessing 'execution_date' from the template is deprecated and will be removed in a future version. Please use 'data_interval_start' or 'logical_date' instead.
+  warnings.warn(_create_deprecation_warning(k, replacements))
+
+[2024-06-08T14:52:33.418+0000] {base.py:84} INFO - Using connection ID 'chess_project_s3' for task execution.
+[2024-06-08T14:52:34.351+0000] {python.py:237} INFO - Done. Returned value was: None
+[2024-06-08T14:52:34.351+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2024-06-08T14:52:34.359+0000] {taskinstance.py:1206} INFO - Marking task as SUCCESS. dag_id=chess_etl, task_id=games_etl, run_id=scheduled__2020-04-01T00:00:00+00:00, execution_date=20200401T000000, start_date=20240608T145232, end_date=20240608T145234
+[2024-06-08T14:52:34.391+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 0
+[2024-06-08T14:52:34.405+0000] {taskinstance.py:3498} INFO - 1 downstream tasks scheduled from follow-on schedule check
+[2024-06-08T14:52:34.406+0000] {local_task_job_runner.py:222} INFO - ::endgroup::
+[2024-07-07T21:21:05.186+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2024-07-07T21:21:05.201+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: chess_etl.games_etl scheduled__2020-04-01T00:00:00+00:00 [queued]>
+[2024-07-07T21:21:05.207+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: chess_etl.games_etl scheduled__2020-04-01T00:00:00+00:00 [queued]>
+[2024-07-07T21:21:05.208+0000] {taskinstance.py:2306} INFO - Starting attempt 1 of 1
+[2024-07-07T21:21:05.219+0000] {taskinstance.py:2330} INFO - Executing <Task(PythonOperator): games_etl> on 2020-04-01 00:00:00+00:00
+[2024-07-07T21:21:05.224+0000] {warnings.py:110} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:61: DeprecationWarning: This process (pid=1467) is multi-threaded, use of fork() may lead to deadlocks in the child.
+  pid = os.fork()
+
+[2024-07-07T21:21:05.225+0000] {standard_task_runner.py:63} INFO - Started process 1471 to run task
+[2024-07-07T21:21:05.225+0000] {standard_task_runner.py:90} INFO - Running: ['***', 'tasks', 'run', 'chess_etl', 'games_etl', 'scheduled__2020-04-01T00:00:00+00:00', '--job-id', '618', '--raw', '--subdir', 'DAGS_FOLDER/chess_dag.py', '--cfg-path', '/tmp/tmpybqb8g4u']
+[2024-07-07T21:21:05.226+0000] {standard_task_runner.py:91} INFO - Job 618: Subtask games_etl
+[2024-07-07T21:21:05.264+0000] {task_command.py:426} INFO - Running <TaskInstance: chess_etl.games_etl scheduled__2020-04-01T00:00:00+00:00 [running]> on host 6569f5155f0c
+[2024-07-07T21:21:05.333+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='chess_etl' AIRFLOW_CTX_TASK_ID='games_etl' AIRFLOW_CTX_EXECUTION_DATE='2020-04-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2020-04-01T00:00:00+00:00'
+[2024-07-07T21:21:05.334+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2024-07-07T21:21:05.335+0000] {warnings.py:110} WARNING - /home/***/.local/lib/python3.12/site-packages/***/utils/context.py:320: AirflowContextDeprecationWarning: Accessing 'execution_date' from the template is deprecated and will be removed in a future version. Please use 'data_interval_start' or 'logical_date' instead.
+  warnings.warn(_create_deprecation_warning(k, replacements))
+
+[2024-07-07T21:21:07.175+0000] {base.py:84} INFO - Using connection ID 'chess_project_s3' for task execution.
+[2024-07-07T21:21:08.057+0000] {python.py:237} INFO - Done. Returned value was: None
+[2024-07-07T21:21:08.058+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2024-07-07T21:21:08.065+0000] {taskinstance.py:1206} INFO - Marking task as SUCCESS. dag_id=chess_etl, task_id=games_etl, run_id=scheduled__2020-04-01T00:00:00+00:00, execution_date=20200401T000000, start_date=20240707T212105, end_date=20240707T212108
+[2024-07-07T21:21:08.128+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 0
+[2024-07-07T21:21:08.148+0000] {taskinstance.py:3498} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2024-07-07T21:21:08.149+0000] {local_task_job_runner.py:222} INFO - ::endgroup::
