@@ -24,6 +24,7 @@ I have implemented a naive algorithm to classify blunders:
 * Stockfish evaluations are mapped to an integer between 4 and -4, 4 indicates white has a forced checkmate, -4 indicates black has a forced checkmate, 0 is a drawn position (0.5 to -0.5 evaluation), 1 indicates white is slightly better (2 to 0.5 evaluation), etc.
 * I have defined a blunder as a move which changes the game state by more than 1, or changes the centipawn evaluation by more than 3.
 * In a specific game analysis this algorithm may be insufficient, but in a long term/aggregate analysis it is sufficient.
+
 Example data:
 ![sample move data](https://github.com/user-attachments/assets/e193132c-34cb-4e04-bf1c-a1f3f511ecc3)
 
