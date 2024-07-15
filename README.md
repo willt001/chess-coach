@@ -8,3 +8,6 @@ The pipeline is orchestrated using Apache Airflow and I have created a custom Do
 ## Airflow DAG
 The below DAG shows the 4 tasks in this pipeline and their dependencies.
 ![chess etl dag](https://github.com/user-attachments/assets/6535cbf2-8f0b-4fe2-9208-1a460becbccd)
+
+## games_etl Task
+This task is responsible for ingesting data (if it exists) from Chess.com's API ![official documentation](https://www.chess.com/news/view/published-data-api) for a given month and user, after some basic transformations the data is stored in an S3 bucket.
