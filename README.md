@@ -38,7 +38,6 @@ Both these tasks work very similarly, they are responsible for copying the csv d
 
 The data is then ready for analytical queries to be run, examples below:
 
-Query:
 ![sample analytical query](https://github.com/user-attachments/assets/f170fcdb-b300-4696-b03b-da1b7c4a4d31)
 
 Result set:
