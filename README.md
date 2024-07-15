@@ -11,6 +11,7 @@ The below DAG shows the 4 tasks in this pipeline and their dependencies.
 
 ## games_etl Task
 This task is responsible for ingesting data (if it exists) from Chess.com's API [official documentation](https://www.chess.com/news/view/published-data-api) for a given month and user, after some basic transformations the data is stored in an S3 bucket.
+![sample game data](https://github.com/user-attachments/assets/fbfd72a4-2366-4bb9-bcc5-88184458ec51)
 
 ## blunders_etl Task
 This task is responsible for transforming the moves string for each game ingested in the previous task. The output is a new dataset of moves which are classified as blunders which is stored in an S3 bucket.
@@ -21,3 +22,4 @@ I have implemented a naive algorithm to classify blunders:
 * Stockfish evaluations are mapped to an integer between 4 and -4, 4 indicates white has a forced checkmate, -4 indicates black has a forced checkmate, 0 is a drawn position (0.5 to -0.5 evaluation), 1 indicates white is slightly better (2 to 0.5 evaluation), etc.
 * I have defined a blunder as a move which changes the game state by more than 1, or changes the centipawn evaluation by more than 3.
 * In a specific game analysis this algorithm may be insufficient, but in a long term/aggregate analysis it is sufficient.
+![sample move data](https://github.com/user-attachments/assets/e193132c-34cb-4e04-bf1c-a1f3f511ecc3)
