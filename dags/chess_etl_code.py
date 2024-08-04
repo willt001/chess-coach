@@ -6,7 +6,12 @@ from airflow.hooks.base import BaseHook
 import logging
 import regex as re
 
-
+def schema_check(game_json):
+    keys_required = ['pgn', 'time_control', 'rated', 'fen', 'time_class', 'url']
+    for key in keys_required:
+        if key not in game_json:
+            return False
+    return True
 
 def get_monthly_games(date, username='willlt001'):
     '''Takes in a date and Chess.com username and outputs a csv with all Chess.com games in that month'''
@@ -35,7 +40,12 @@ def get_monthly_games(date, username='willlt001'):
     if not games:
         return None
     game_list = []
-    for game in games:
+    for i, game in enumerate(games):
+        #Check fields required are in json
+        if not schema_check(game):
+            logging.info(f'Schema Check for game {i}')
+            continue
+        
         #PGN is a standard plain text format for recording chess games
         pgn = game.get('pgn').split('\n')
         if len(pgn)<23:
