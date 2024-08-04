@@ -5,6 +5,7 @@ import s3fs
 from airflow.hooks.base import BaseHook
 import logging
 import regex as re
+from airflow import AirflowException
 
 def schema_check(game_json):
     keys_required = ['pgn', 'time_control', 'rated', 'fen', 'time_class', 'url']
@@ -43,9 +44,8 @@ def get_monthly_games(date, username='willlt001'):
     for i, game in enumerate(games):
         #Check fields required are in json
         if not schema_check(game):
-            logging.info(f'Schema Check for game {i}')
-            continue
-        
+            raise AirflowException(f'Schema Check for game {i}')
+
         #PGN is a standard plain text format for recording chess games
         pgn = game.get('pgn').split('\n')
         if len(pgn)<23:
