@@ -9,10 +9,8 @@ def pgn_to_san(game):
     game = game.split(' ')
     n = len(game)
     moves_array = []
-    i=1
-    while i < n:
+    for i in range(1, n, 4):
         moves_array.append(game[i])
-        i+=4
     return moves_array
 
 def san_to_uci(moves_array):
