@@ -105,8 +105,11 @@ def get_monthly_blunders(date):
     try:
         with s3.open(f's3://chess-coach-de-project/{year_month}_games.csv', 'r') as f:
             df = pd.read_csv(f)
-    except:
+    except FileNotFoundError:
         print(f'No games for period {year_month}')
+        return
+    except Exception as e:
+        print(f'An error occured: {e}')
         return
     #Store the relevant fields from games data
     games, urls, dates, datenums = df.loc[:, 'moves'], df.loc[:, 'url'], df.loc[:, 'date'], df.loc[:, 'datenum']
