@@ -3,7 +3,7 @@ Anyone who regularly plays chess on Chess.com may know that they have excellent 
 
 I have created a pipeline which ingests data from Chess.com's public API, stores the game data in AWS S3, analyses the game data with the chess engine 'Stockfish' to obtain blunders (moves which are mistakes) data, and finally loads the data to AWS Redshift where it is ready for analytical queries. 
 
-The pipeline is orchestrated using Apache Airflow and I have created a custom Dockerfile which can be used to run the project on a local machine. Alternatively the project can be deployed to an AWS EC2 machine but I choose to run this on my local machine because the Chess.com API only offers game data in monthly batches, meaning the pipeline only needs to be ran once per month.
+The pipeline is orchestrated using Apache Airflow running with Docker Compose. The Docker Desktop application is required to run the containers, then running the command 'docker compose up -d --build' will allow you to view the DAG in the Airflow webserver at localhost:8080. The DAG will fail without creating the necessary AWS infrastructure and corresponding connections in Airflow, though I am looking to create a test version of this pipeline in the future which can be run locally to make the project more sharable.
 
 ## Airflow DAG
 The below DAG shows the 4 tasks in this pipeline and their dependencies.
