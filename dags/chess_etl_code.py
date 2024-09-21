@@ -19,7 +19,9 @@ def get_monthly_games(date, username='willlt001'):
     #Send REST API call and extract json response
     year_month = str(date)[:7].replace('-', '/')
     url = f'https://api.chess.com/pub/player/{username}/games/{year_month}'
-    headers = {"User-Agent": f"{username}"}
+    headers = {
+        "User-Agent": username
+    }
     r = requests.get(url, headers=headers)
     if r.status_code != 200:
         return
