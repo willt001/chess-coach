@@ -7,15 +7,15 @@ The pipeline is orchestrated using Apache Airflow and I have created a custom Do
 
 ## Airflow DAG
 The below DAG shows the 4 tasks in this pipeline and their dependencies.
-![chess etl dag](https://github.com/user-attachments/assets/6535cbf2-8f0b-4fe2-9208-1a460becbccd)
+![chess_etl](https://github.com/user-attachments/assets/f983b6de-9960-4c16-a033-2c8dcbe489ea)
 
-## games_etl Task
+## download_games_upload_s3 Task
 This task is responsible for ingesting data (if it exists) from Chess.com's API [official documentation](https://www.chess.com/news/view/published-data-api) for a given month and user, after some basic transformations the data is stored in an S3 bucket.
 
 Example data:
 ![sample game data](https://github.com/user-attachments/assets/fbfd72a4-2366-4bb9-bcc5-88184458ec51)
 
-## blunders_etl Task
+## calculate_blunders_upload_s3 Task
 This task is responsible for transforming the moves string for each game ingested in the previous task. The output is a new dataset of moves which are classified as blunders which is stored in an S3 bucket.
 
 I am using the Stockfish chess engine for the algorithm to classify blunders, the Stockfish python library works by sending commands to the Stockfish CLI program as a subprocess. 
@@ -28,7 +28,7 @@ I have implemented a naive algorithm to classify blunders:
 Example data:
 ![sample move data](https://github.com/user-attachments/assets/e193132c-34cb-4e04-bf1c-a1f3f511ecc3)
 
-## redshift_game_load and redshift_move_load Tasks
+## load_games_to_redshift and load_moves_to_redshift Tasks
 Both these tasks work very similarly, they are responsible for copying the csv data in S3 to Redshift in monthly batches, various CRUD operations are performed:
 * Delete records for the given month from the staging table.
 * Copy records for the given month to the staging table.
