@@ -1,19 +1,21 @@
 import s3fs
 import redshift_connector
 from airflow.hooks.base import BaseHook
+from datetime import datetime
 
 
-def load_game_data(execution_date):
+
+def load_game_data(execution_date: datetime) -> None:
     '''Load monthly game data from S3 to Redshift'''
     execution_date = str(execution_date)
     year_month = execution_date[:7].replace('-', '_')
 
-    #S3 Credentials are securely stored in Airflow connections list
+    # S3 Credentials are securely stored in Airflow connections list
     connection = BaseHook.get_connection('chess_project_s3')
     my_key = connection.login
     my_secret = connection.password
     s3 = s3fs.S3FileSystem(anon=False, key=my_key, secret=my_secret)
-    #Return None if no games are found for the given month
+    # Return None if no games are found for the given month
     try:
         with s3.open(f's3://chess-coach-de-project/{year_month}_games.csv', 'r') as f:
             pass
@@ -21,7 +23,7 @@ def load_game_data(execution_date):
         print(f'No games for period {year_month}')
         return
     
-    #Redshift Credentials are securely stored in Airflow connections list
+    # Redshift Credentials are securely stored in Airflow connections list
     connection = BaseHook.get_connection('chess_project_redshift')
     my_user = connection.login
     my_password = connection.password
@@ -29,12 +31,11 @@ def load_game_data(execution_date):
     my_port = connection.port
     my_database = connection.schema
     conn = redshift_connector.connect(
-    host=my_host,
-    port=my_port,
-    database=my_database,
-    user=my_user,
-    password=my_password,
-    )
+                                host=my_host,
+                                port=my_port,
+                                database=my_database,
+                                user=my_user,
+                                password=my_password,)
 
     #IAM ARN stored in Airflow connections list
     connection = BaseHook.get_connection('chess_project_iam')
@@ -105,25 +106,25 @@ def load_game_data(execution_date):
     #If staging row count is less than prod row count, do not load staging data to prod
     cursor.execute(check_games_query)
     check = cursor.fetchall()[0][0]
-    if check==0:
+    if check == 0:
         conn.close()
-        return None
+        return
     
     cursor.execute(delete_games_query)
     cursor.execute(insert_games_query)
     conn.commit()
     conn.close()
 
-def load_move_data(execution_date):
+def load_move_data(execution_date: datetime) -> None:
     '''Load monthly game data from S3 to Redshift'''
     execution_date = str(execution_date)
     year_month = execution_date[:7].replace('-', '_')
-    #S3 Credentials are securely stored in Airflow connections list
+    # S3 Credentials are securely stored in Airflow connections list
     connection = BaseHook.get_connection('chess_project_s3')
     my_key = connection.login
     my_secret = connection.password
     s3 = s3fs.S3FileSystem(anon=False, key=my_key, secret=my_secret)
-    #Return None if no moves data is found in S3 bucket for given month
+    # Return None if no moves data is found in S3 bucket for given month
     try:
         with s3.open(f's3://chess-coach-de-project/{year_month}_moves.csv', 'r') as f:
             pass
@@ -131,7 +132,7 @@ def load_move_data(execution_date):
         print(f'No games for period {year_month}')
         return
     
-    #Redshift Credentials are securely stored in Airflow connections list
+    # Redshift Credentials are securely stored in Airflow connections list
     connection = BaseHook.get_connection('chess_project_redshift')
     my_user = connection.login
     my_password = connection.password
@@ -139,12 +140,11 @@ def load_move_data(execution_date):
     my_port = connection.port
     my_database = connection.schema
     conn = redshift_connector.connect(
-    host=my_host,
-    port=my_port,
-    database=my_database,
-    user=my_user,
-    password=my_password,
-    )
+                                    host=my_host,
+                                    port=my_port,
+                                    database=my_database,
+                                    user=my_user,
+                                    password=my_password,)
 
     #IAM ARN stored in Airflow connections list
     connection = BaseHook.get_connection('chess_project_iam')

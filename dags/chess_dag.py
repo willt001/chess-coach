@@ -7,7 +7,7 @@ from redshift_etl_code import load_game_data, load_move_data
 @dag(
     start_date=pendulum.datetime(2019, 1, 1, tz='UTC'),
     schedule_interval='@monthly',
-    catchup=True,
+    catchup=False,
     max_active_runs=2
     )
 def chess_etl():
