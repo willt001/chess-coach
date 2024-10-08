@@ -20,8 +20,8 @@ Using dynamic task mapping on each of the parquet files produced by the extract_
 ## local_to_s3 Task
 Copying parquet file from local file system on Airflow worker to 'games' table in S3 with Hive style partitioning (so Glue data crawler will automatically detect a partitioned table). After copying to S3, the local file is cleaned up with the 'delete_local_file' bash task.
 
-Partitions:
 ![hive partitions](https://github.com/user-attachments/assets/c2c5224a-51cc-4b45-bcdc-ca571a7a6f52)
+![image](https://github.com/user-attachments/assets/934b2a41-c96f-4800-a8f2-32e225b5c5ce)
 
 ## calculate_blunders Task
 Invoking the Lambda function to process one partition and save the output to a seperate 'moves' table in S3.
