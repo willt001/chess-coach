@@ -1,4 +1,2 @@
-s3fs
-chess
-stockfish
+apache-airflow-providers-amazon
 regex

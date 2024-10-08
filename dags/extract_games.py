@@ -1,10 +1,11 @@
 import requests
 import pandas as pd
 from datetime import datetime
-import s3fs
-from airflow.hooks.base import BaseHook
 import regex as re
 from airflow import AirflowException
+import pyarrow as pa
+import pyarrow.parquet as pq
+
 
 def schema_check(game_json: dict) -> bool:
     keys_required = ['pgn', 'time_control', 'rated', 'fen', 'time_class', 'url']
@@ -15,35 +16,30 @@ def schema_check(game_json: dict) -> bool:
 
 def get_monthly_games(date: datetime, username: str = 'willlt001') -> None:
     '''Takes in a date and Chess.com username and outputs a csv with all Chess.com games in that month'''
-    # Send REST API call and extract json response
+    # Chess.com API returns one calendar month of games for one user.
     year_month = str(date)[:7].replace('-', '/')
     url = f'https://api.chess.com/pub/player/{username}/games/{year_month}'
-    headers = {
-        "User-Agent": username
-    }
+    # Request will be blocked if default headers are used.
+    headers = {"User-Agent": username}
     r = requests.get(url, headers=headers)
     if r.status_code != 200:
         raise AirflowException(f'Bad Status Code: {r.status_code}')
     games = r.json()
     games = games.get('games')
-    # Return None if no games are found for the given year/month
+    # If no games are found, return blank list so downstream tasks are skipped.
     if not games:
-        return
+        return []
     game_list = []
     for i, game in enumerate(games):
-        # Check fields required are in json
         if not schema_check(game):
             raise AirflowException(f'Schema Check for game {i}')
-
         # PGN is a standard plain text format for recording chess games
         pgn = game.get('pgn').split('\n')
         if len(pgn) < 23:
             print(f'Unable to parse: {pgn}')
             continue
-
         refined_game = {'url': game.get('url'),
-                        'date': pgn[2][7:17].replace('.', '-'),
-                        'datenum': pgn[2][7:17].replace('.', ''),
+                        'game_date': pgn[2][7:17].replace('.', '-'),
                         'moves': pgn[22],
                         'time_control': game.get('time_control'),
                         'rated_flag': game.get('rated'),
@@ -84,27 +80,36 @@ def get_monthly_games(date: datetime, username: str = 'willlt001') -> None:
             refined_game['hero_result'] = 'win'
             refined_game['villain_result'] = 'loss'
 
-        # Extract keywords for game termination reason
+        # Extract keywords for game termination reason.
         if 'by' in refined_game['termination']:
             refined_game['termination_reason'] = refined_game['termination'].split('by ')[-1]
         else:
             refined_game['termination_reason'] = refined_game['termination'].split(' ')[-1]
 
         # Extract the first two words from the opening string
-        pattern = re.compile(r'^([A-Z][a-z]+)\-([A-Z][a-z]+)+')
-        refined_game['opening_short'] = re.match(pattern, refined_game['opening']).group(0)
+        pattern = re.compile(r'^([A-Z]([a-z]|-)+)\-([A-Z][a-z]+)+')
+        match = re.match(pattern, refined_game['opening'])
+        refined_game['opening_short'] = match.group(0) if match else refined_game['opening']
 
         game_list.append(refined_game)
 
     df = pd.DataFrame(game_list)
-    
-    # S3 Credentials are securely stored in Airflow connections list
-    connection = BaseHook.get_connection('chess_project_s3')
-    my_key = connection.login
-    my_secret = connection.password
+    df.game_date = df.game_date.astype('datetime64[us]')
 
-    # Load df to S3 bucket as csv
-    year_month = year_month.replace('/', '_')
-    s3 = s3fs.S3FileSystem(anon=False, key=my_key, secret=my_secret)
-    with s3.open(f's3://chess-coach-de-project/{year_month}_games.csv', 'w') as f:
-        df.to_csv(f)
+    # Split the data into partitions of <=50 games each. It takes AWS Lambda approx 10 minutes to process 50 games.
+    df['partition_num'] = df.index // 50
+    partitions = df.groupby('partition_num')
+    year_month = year_month.replace('/', '')
+    xcom = []
+    # Save each partition to one parquet file, using Apache Hive style partitioning for file naming.
+    for idx, df in partitions:
+        table = pa.Table.from_pandas(df.drop('partition_num', axis=1), preserve_index=False)
+        pq.write_table(table, f'games_m={year_month}_p={idx}.parquet')
+        xcom.append(
+            {
+                'filename': f'games_m={year_month}_p={idx}.parquet',
+                'dest_key': f'games/month={year_month}/games_{idx}.parquet'
+            }  
+        )
+    # Push XCom to use for dynamic task mapping in downstream tasks.
+    return xcom
