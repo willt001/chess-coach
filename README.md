@@ -1,46 +1,47 @@
-# Chess coaching data
-Anyone who regularly plays chess on Chess.com may know that they have excellent tools for analysing individual chess games such as game review and analysis board. However, there are no tools for analysing trends or aggregated game data, this is the problem I have aimed to solve with this project!
+## Chess coach data pipeline
+Anyone who regularly plays chess on Chess.com may know that they have excellent tools for analysing individual chess games such as game review and analysis board. However, there are no tools for analysing trends or aggregated game data, this is the problem I have solved with this project!
 
-I have created a pipeline which ingests data from Chess.com's public API, stores the game data in AWS S3, analyses the game data with the chess engine 'Stockfish' to obtain blunders (moves which are mistakes) data, and finally loads the data to AWS Redshift where it is ready for analytical queries. 
+I have created a pipeline which ingests games data from Chess.com's public API and analyses the games data with chess engine Stockfish 17 to obtain data for blunders (moves which are mistakes). 
 
-The pipeline is orchestrated using Apache Airflow running with Docker Compose. The Docker Desktop application is required to run the containers, then running the command 'docker compose up -d --build' will allow you to view the DAG in the Airflow webserver at localhost:8080. The DAG will fail without creating the necessary AWS infrastructure and corresponding connections in Airflow, though I am looking to create a test version of this pipeline in the future which can be run locally to make the project more sharable.
+The pipeline is hosted on AWS using serverless architecture: S3 for storage, Lambda for compute, Glue for data catalog, and Athena for analytics. The pipeline is orchestrated using Apache Airflow and can be run using Docker Desktop and running the command 'docker compose up -d --build' inside the repository directory.
 
-To do: Change blunders processing to run on AWS Lambda (using container image), rather than processing locally on Airflow worker.
+# Airflow DAG
+![chess lambda DAG](https://github.com/user-attachments/assets/0ae58d20-becc-49d6-845a-44f1802d4784)
+## extract_games Task
+Extracting data from Chess.com's official API for a given month and user. Each extract is partitioned into parquet files of 50 records each and temporarily stored on the local file system of the Airflow worker (with Apache Hive style partitioning on 'month'). 
 
-## Airflow DAG
-The below DAG shows the 4 tasks in this pipeline and their dependencies.
-![chess_etl](https://github.com/user-attachments/assets/f983b6de-9960-4c16-a033-2c8dcbe489ea)
+Each batch of 50 chess games will take approximately 10 minutes to process with the Lambda function, partition size of 50 games was chosen to fall below the maximum timeout of 15 minutes on Lambda. 
 
-## download_games_upload_s3 Task
-This task is responsible for ingesting data (if it exists) from Chess.com's API [official documentation](https://www.chess.com/news/view/published-data-api) for a given month and user, after some basic transformations the data is stored in an S3 bucket.
+I push an XCom containing file names for each of the parquet files created to be dynamically used by downstream tasks.
 
-Example data:
-![sample game data](https://github.com/user-attachments/assets/fbfd72a4-2366-4bb9-bcc5-88184458ec51)
+## process_partiton Task Group
+Using dynamic task mapping on each of the parquet files produced by the extract_games task.
 
-## calculate_blunders_upload_s3 Task
-This task is responsible for transforming the moves string for each game ingested in the previous task. The output is a new dataset of moves which are classified as blunders which is stored in an S3 bucket.
+## local_to_s3 Task
+Copying parquet file from local file system on Airflow worker to 'games' table in S3 with Hive style partitioning (so Glue data crawler will automatically detect a partitioned table). After copying to S3, the local file is cleaned up with the 'delete_local_file' bash task.
+Partitions:
+![hive partitions](https://github.com/user-attachments/assets/c2c5224a-51cc-4b45-bcdc-ca571a7a6f52)
 
-I am using the Stockfish chess engine for the algorithm to classify blunders, the Stockfish python library works by sending commands to the Stockfish CLI program as a subprocess. 
+## calculate_blunders Task
+Invoking the Lambda function to process one partition and save the output to a seperate 'moves' table in S3.
 
-I have implemented a naive algorithm to classify blunders: 
-* Stockfish evaluations are mapped to an integer between 4 and -4, 4 indicates white has a forced checkmate, -4 indicates black has a forced checkmate, 0 is a drawn position (0.5 to -0.5 evaluation), 1 indicates white is slightly better (2 to 0.5 evaluation), etc.
-* I have defined a blunder as a move which changes the game state by more than 1, or changes the centipawn evaluation by more than 3.
-* In a specific game analysis this algorithm may be insufficient, but in a long term/aggregate analysis it is sufficient.
+The Stockfish chess engine is used for the algorithm to classify moves as blunders. Since the Stockfish engine is only available as an executable file (which I use the Stockfish python library to interact with), the data needs to be processed in an environment where the Stockfish binary is installed. 
 
-Example data:
-![sample move data](https://github.com/user-attachments/assets/e193132c-34cb-4e04-bf1c-a1f3f511ecc3)
+I solved this problem by writing a Dockerfile to install and compile the Stockfish source code on an existing AWS Lambda Python image. Lambda provides functionality to use a docker image which has been pushed to Elastic Container Registry as an environment, more details on this below.
 
-## load_games_to_redshift and load_moves_to_redshift Tasks
-Both these tasks work very similarly, they are responsible for copying the csv data in S3 to Redshift in monthly batches, various CRUD operations are performed:
-* Delete records for the given month from the staging table.
-* Copy records for the given month to the staging table.
-* Check the staging table's row count is not less than the row count for any existing records in the final table. If it is then cancel the transaction.
-* Delete records for the given month from the final table.
-* Insert records from staging table to final table, applying any final transformations.
+Typically, machine learning and advanced metrics such as expected win probability are used to classify blunders. However, for an aggregated analysis, the naive algorithm I have derived and detailed below proves sufficient:
+* Stockfish evaluations are mapped to an integer 'game state' between 4 and -4:
+    * 4: Forced checkmate for white.
+    * 3: Strong advantage for white.
+    * 2: Advantage for white.
+    * 1: Slight advantage for white.
+    * 0: Drawing position
+    * -1: Slight advantage for black.
+    * -2: Advantage for black.
+    * -3: Strong advantage for black.
+    * -4: Forced checkmate for black.
+* A blunder is a move which shifts the game state by more than 1, or shifts the Stocfish evaluation by more than 3.
 
-The data is then ready for analytical queries to be run, examples below:
+# Lambda Function
 
-![sample analytical query](https://github.com/user-attachments/assets/f170fcdb-b300-4696-b03b-da1b7c4a4d31)
-
-Result set:
-![sample result set](https://github.com/user-attachments/assets/a5d0cfc6-0668-4bc6-ab90-b4c875f5b62a)
+TBC
