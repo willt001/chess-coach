@@ -45,7 +45,7 @@ Typically, machine learning and advanced metrics such as expected win probabilit
 
 ## crawl_s3 Task
 
-Running the AWS Glue Crawler to update the data catalog with the new partitions added to the data lake in S3. The latest data will then be available to query in Athena.
+Running the AWS Glue Crawler to update the data catalog with the new partitions added to the data lake in S3, the crawl_s3 task is skipped if a crawler is already running (from a parallel DagRun). The latest data will then be available to query in Athena.
 
 # Lambda Function
 
