@@ -6,7 +6,7 @@ I have created a pipeline which ingests games data from Chess.com's public API a
 The pipeline is hosted on AWS using serverless architecture: S3 for storage, Lambda for compute, Glue for data catalog, and Athena for analytics. The pipeline is orchestrated using Apache Airflow and can be run using Docker Desktop and running the command 'docker compose up -d --build' inside the repository directory.
 
 # Airflow DAG
-![chess lambda DAG](https://github.com/user-attachments/assets/0ae58d20-becc-49d6-845a-44f1802d4784)
+![chess lambda DAG](https://github.com/user-attachments/assets/369af722-e6a7-46b8-8ede-6db3e52d95b6)
 ## extract_games Task
 Extracting data from Chess.com's official API for a given month and user. Each extract is partitioned into parquet files of 50 records each and temporarily stored on the local file system of the Airflow worker (with Apache Hive style partitioning on 'month'). 
 
@@ -41,7 +41,11 @@ Typically, machine learning and advanced metrics such as expected win probabilit
     * -2: Advantage for black.
     * -3: Strong advantage for black.
     * -4: Forced checkmate for black.
-* A blunder is a move which shifts the game state by more than 1, or shifts the Stocfish evaluation by more than 3.
+* A blunder is a move which shifts the game state by more than 1, or shifts the Stockfish evaluation by more than 3.
+
+## crawl_s3 Task
+
+Running the AWS Glue Crawler to update the data catalog with the new partitions added to the data lake in S3. The latest data will then be available to query in Athena.
 
 # Lambda Function
 
