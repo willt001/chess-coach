@@ -45,4 +45,16 @@ Typically, machine learning and advanced metrics such as expected win probabilit
 
 # Lambda Function
 
-TBC
+The code which runs on AWS Lambda is the 'handler' function found in the lambda-docker-image/lambda_function.py file. The value for the 'event' argument will be the JSON value we pass to the 'payload' argument of LambdaInvokeFunctionOperator in Airflow.
+
+## Deploying function code to AWS (Using Docker image)
+
+The prerequisites for deploying the function code are to have the AWS CLI and Docker Desktop installed on your development environment. [Reference](https://docs.aws.amazon.com/AmazonECR/latest/userguide/getting-started-cli.html)
+
+* cd into the lambda-docker-image directory and run the 'docker build -t **image-name** .' command to build the docker image from the Dockerfile. The Dockerfile installs the dependencies and compiles the Stockfish 17 source code from https://github.com/official-stockfish/Stockfish.
+* Create a repository in ECR to store the docker image with 'aws ecr create-repository --repository-name **repository-name** --region **region-name**'.
+* Authenticate Docker to the AWS ECR repository with 'aws ecr get-login-password --region **region-name** | docker login --username AWS --password-stdin **aws_account_id**.dkr.ecr.**region-name**.amazonaws.com'.
+* Tag the docker image with 'docker tag **image-name**:latest **aws_account_id**.dkr.ecr.**region-name**.amazonaws.com/**repository-name**'.
+* Push the docker image to ECR with 'docker push **aws_account_id**.dkr.ecr.**region-name**.amazonaws.com/**repository-name**'.
+* Navigate to ECR in the AWS Management Console and copy the Image URI.
+* Navigate to Lambda in the AWS Management Console and use the Image URI to create a Lambda Function.
