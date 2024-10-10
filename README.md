@@ -1,12 +1,20 @@
-## Chess coach data pipeline
+# Chess coach data pipeline
 Anyone who regularly plays chess on Chess.com may know that they have excellent tools for analysing individual chess games such as game review and analysis board. However, there are no tools for analysing trends or aggregated game data, this is the problem I have solved with this project!
 
-I have created a pipeline which ingests games data from Chess.com's public API and analyses the games data with chess engine Stockfish 17 to obtain data for blunders (moves which are mistakes). 
+I have created a pipeline which ingests games data from Chess.com's public API and analyses the games data with chess engine Stockfish 17 to obtain a rich dataset of moves, with valuable attributes such as flag_blunder, flag_capture, flag_check, etc.
 
-The pipeline is hosted on AWS using serverless architecture: S3 for storage, Lambda for compute, Glue for data catalog, and Athena for analytics. The pipeline is orchestrated using Apache Airflow and can be run using Docker Desktop and running the command 'docker compose up -d --build' inside the repository directory.
+The pipeline is hosted on AWS using serverless architecture: S3 for storage, Lambda for compute, Glue for data catalog, and Athena for analytics. The pipeline is orchestrated using Apache Airflow and can be run using Docker Desktop and running the following command inside the repository directory.
+```bash
+docker compose up -d --build
+```
 
-# Airflow DAG
-![chess lambda DAG](https://github.com/user-attachments/assets/369af722-e6a7-46b8-8ede-6db3e52d95b6)
+## ETL DAG
+![image](https://github.com/user-attachments/assets/5c9f4945-088e-4cbd-abb6-6c6399822520)
+
+## Glue Crawler DAG
+
+![image](https://github.com/user-attachments/assets/4b719b05-c751-4a46-8b09-5646c99082a6)
+
 ## extract_games Task
 Extracting data from Chess.com's official API for a given month and user. Each extract is partitioned into parquet files of 50 records each and temporarily stored on the local file system of the Airflow worker (with Apache Hive style partitioning on 'month'). 
 
@@ -55,10 +63,25 @@ The code which runs on AWS Lambda is the 'handler' function found in the lambda-
 
 The prerequisites for deploying the function code are to have the AWS CLI and Docker Desktop installed on your development environment. [Reference](https://docs.aws.amazon.com/AmazonECR/latest/userguide/getting-started-cli.html)
 
-* cd into the lambda-docker-image directory and run the 'docker build -t **image-name** .' command to build the docker image from the Dockerfile. The Dockerfile installs the dependencies and compiles the Stockfish 17 source code from https://github.com/official-stockfish/Stockfish.
-* Create a repository in ECR to store the docker image with 'aws ecr create-repository --repository-name **repository-name** --region **region-name**'.
-* Authenticate Docker to the AWS ECR repository with 'aws ecr get-login-password --region **region-name** | docker login --username AWS --password-stdin **aws_account_id**.dkr.ecr.**region-name**.amazonaws.com'.
-* Tag the docker image with 'docker tag **image-name**:latest **aws_account_id**.dkr.ecr.**region-name**.amazonaws.com/**repository-name**'.
-* Push the docker image to ECR with 'docker push **aws_account_id**.dkr.ecr.**region-name**.amazonaws.com/**repository-name**'.
+* Build the docker image from the Dockerfile. The Dockerfile installs the dependencies and compiles the Stockfish 17 source code from https://github.com/official-stockfish/Stockfish.
+```bash
+cd lambda-docker-image | docker build -t <image-name> .
+```
+* Create a repository in ECR to store the docker image.
+```bash
+aws ecr create-repository --repository-name <repository-name> --region <region-name>
+```
+* Authenticate Docker to the AWS ECR repository.
+```bash
+aws ecr get-login-password --region <region-name> | docker login --username AWS --password-stdin <aws_account_id>.dkr.ecr.<region-name>.amazonaws.com
+```
+* Tag the Docker image.
+```bash
+docker tag <image-name>:latest <aws_account_id>.dkr.ecr.<region-name>.amazonaws.com/<repository-name>
+```
+* Push the docker image to ECR.
+```bash
+docker push <aws_account_id>.dkr.ecr.<region-name>.amazonaws.com/<repository-name>
+```
 * Navigate to ECR in the AWS Management Console and copy the Image URI.
 * Navigate to Lambda in the AWS Management Console and use the Image URI to create a Lambda Function.
