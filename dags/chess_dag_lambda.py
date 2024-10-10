@@ -4,15 +4,9 @@ from airflow.decorators import dag, task, task_group
 from extract_games import get_monthly_games
 from airflow.providers.amazon.aws.transfers.local_to_s3 import LocalFilesystemToS3Operator
 from airflow.providers.amazon.aws.operators.lambda_function import LambdaInvokeFunctionOperator
-from airflow.providers.amazon.aws.operators.glue_crawler import GlueCrawlerOperator
 import logging
-from config import BUCKET_NAME, LAMBDA_FUNCTION_NAME, GLUE_CRAWLER_CONFIG, REGION_NAME
-import json
-from airflow.exceptions import AirflowSkipException
-from airflow.hooks.base import BaseHook
-import time
+from config import BUCKET_NAME, LAMBDA_FUNCTION_NAME
 
-glue_crawler_config = json.loads(GLUE_CRAWLER_CONFIG)
 
 @dag(
     start_date=pendulum.datetime(2019, 1, 1, tz='UTC'),
@@ -57,33 +51,8 @@ def chess_etl_lambda():
         )
         
         local_to_s3 >> [calculate_blunders, delete_local_file(kwargs['filename'])]
-    
-    @task(pool='glue_crawler_pool')
-    def wait_30_seconds():
-        time.sleep(30)
-
-    @task
-    def check_glue_crawler_status(crawler_name):
-        connection = BaseHook.get_connection('aws_access')
-        glue_client = boto3.client(
-                                'glue',
-                                aws_access_key_id=connection.login,
-                                aws_secret_access_key=connection.password,
-                                region_name=REGION_NAME
-                                )
-        response = glue_client.get_crawler(Name=crawler_name)
-        crawler_state = response['Crawler']['State']
-        if crawler_state in ['RUNNING', 'STOPPING']:
-            raise AirflowSkipException(f"Crawler {crawler_name} is already running.")
-    
-    crawl_s3 = GlueCrawlerOperator(
-        task_id="crawl_s3",
-        config=glue_crawler_config,
-        aws_conn_id='aws_access',
-        wait_for_completion=False
-    )
 
     data = extract_games()
-    process_partition.expand(zipped_kwargs=data) >> wait_30_seconds() >> check_glue_crawler_status(glue_crawler_config['Name']) >> crawl_s3
+    process_partition.expand(zipped_kwargs=data)
 
 chess_etl_lambda()

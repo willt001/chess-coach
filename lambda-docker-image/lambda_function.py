@@ -18,7 +18,7 @@ def new_stockfish(depth: int=16, threads: int=1, hash: int=2048) -> Stockfish:
     stockfish = Stockfish('/usr/local/bin/stockfish', depth=depth, parameters=parameters)
     return stockfish
 
-def get_san_moves(pgn: str) -> List[str]:
+def pgn_to_san(pgn: str) -> List[str]:
     '''
     Converts pgn game format to a list of SAN moves.
     '''
@@ -35,6 +35,19 @@ def san_to_uci(san_moves: List[str]) -> List[str]:
         board.push_san(move)
     return uci_moves
 
+def material_evaluation(stockfish: Stockfish) -> int:
+    '''Takes in a chess position and outputs the material evaluation as an integer'''
+    from collections import Counter
+    piece_values = {'R': 5, 'N': 3, 'B': 3, 'Q': 9, 'P': 1, 'r': -5, 'n': -3, 'b': -3, 'q': -9, 'p': -1}
+    fen = stockfish.get_fen_position()
+    fen = fen.split(' ')[0]
+    pieces = Counter(fen)
+    res = 0
+    for piece in pieces:
+        if piece_values.get(piece):
+            res += piece_values[piece]*pieces[piece]
+    return res
+
 def get_evaluations(uci_moves: List[str], stockfish: Stockfish=None) -> List[dict]:
     '''Takes in an array of UCI moves and outputs array containing the Stockfish evaluation after each move'''
     if not stockfish:
@@ -43,6 +56,7 @@ def get_evaluations(uci_moves: List[str], stockfish: Stockfish=None) -> List[dic
     for move in uci_moves:
         stockfish.make_moves_from_current_position([move])
         stockfish_evaluation = stockfish.get_evaluation()
+        stockfish_evaluation['material_eval'] = material_evaluation(stockfish)
         eval_array.append(stockfish_evaluation)
     return eval_array
 
@@ -73,23 +87,64 @@ def game_state(evaluation: dict) -> int:
         else:
             return -3
 
-def get_blunders(evaluations: List[dict], uci_moves: List[str], san_moves: List[str]) -> List[list]:
-    '''Takes in an array of chess moves and outputs the moves which are classified as blunders'''
-    game_states = [game_state(i) for i in evaluations]
-    blunders = []
-    for i in range(len(evaluations) - 1):
-        delta = game_states[i + 1] - game_states[i]
-        colour = 'white' if (i + 1) % 2 == 0 else 'black'
-        #Game is over due to checkmate
-        if delta == float('inf'):
-            continue
-        #Change in game state of 2 or greater indicates a blunder
+def get_moves(evaluations: List[dict], uci_moves: List[str], san_moves: List[str]) -> pd.DataFrame:
+    '''Combine moves and evaluation arrays to produce a dataset of moves'''
+    game_states = [game_state(evaluation) for evaluation in evaluations]
+    moves = []
+    n = len(evaluations)
+    for i in range(n):
+        move = [
+            san_moves[i], 
+            uci_moves[i], 
+            'white' if i % 2 == 0 else 'black', 
+            i % 2, 
+            (i // 2) + 1, 
+            game_states[i] if game_states[i] < float('inf') else None, 
+            game_states[i - 1] if i > 0 else 0,
+            *evaluations[i].values(),
+            *(evaluations[i - 1].values() if i > 0 else ['cp', 31, 0]),
+            0 # Default value for flag_blunder is 0
+            ]
+        # Assign a game state 5/-5 for checkmate.
+        if move[5] is None and i % 2 == 0:
+            move[5] = 5
+        elif move[5] is None and i % 2 == 1:
+            move[5] = -5
+        # Assign value for flag_blunder.
+        delta = (game_states[i] - game_states[i - 1]) if i > 0 else None 
+        # Checkmate or first move cannot be a blunder.
+        if not delta or delta == float('inf'):
+            pass
+        # Change in game state of 2 or greater indicates a blunder.
         elif abs(delta) >= 2: 
-            blunders.append([san_moves[i + 1], uci_moves[i + 1], colour, (i + 1) % 2, ((i + 1) // 2) + 1, game_states[i + 1], game_states[i]] + list(evaluations[i + 1].values()) + list(evaluations[i].values()))
-        #Change in game state of 1 indicates a blunder if change in evaluation is also high
-        elif abs(delta) == 1 and abs(evaluations[i + 1]['value'] - evaluations[i]['value']) >= 300 and evaluations[i + 1]['type'] != 'mate' and evaluations[i]['type'] != 'mate':
-            blunders.append([san_moves[i + 1], uci_moves[i + 1], colour, (i + 1) % 2, ((i + 1) // 2) + 1, game_states[i + 1], game_states[i]] + list(evaluations[i + 1].values()) + list(evaluations[i].values()))
-    return blunders
+            move[-1] = 1
+        # Change in game state of 1 indicates a blunder if change in evaluation is also high.
+        elif abs(delta) == 1 and abs(evaluations[i]['value'] - evaluations[i - 1]['value']) >= 300 and evaluations[i]['type'] != 'mate' and evaluations[i - 1]['type'] != 'mate':
+            move[-1] = 1   
+        # Assign value for flag_capture
+        if move[12] != move[9]:
+            move.append(1)
+        else:
+            move.append(0)
+        moves.append(move)
+    df = pd.DataFrame(moves, columns=[
+            'san', 
+            'uci', 
+            'colour', 
+            'side', 
+            'move',
+            'game_state_after', 
+            'game_state_before', 
+            'eval_type_after', 
+            'eval_after',
+            'material_eval_after', 
+            'eval_type_before', 
+            'eval_before', 
+            'material_eval_before',
+            'flag_blunder',
+            'flag_capture'
+            ])
+    return df
 
 def handler(event, context):
     bucket_name = event['bucket_name']
@@ -108,17 +163,38 @@ def handler(event, context):
     games = games_df[['url', 'game_date', 'moves']].to_numpy()
     blunders_dfs = []
     for url, date, game in games:
-        san_moves = get_san_moves(game)
+        san_moves = pgn_to_san(game)
         uci_moves = san_to_uci(san_moves)
         evaluations = get_evaluations(uci_moves)
-        blunders = get_blunders(evaluations, uci_moves, san_moves)
-        df = pd.DataFrame(blunders, columns=['san', 'uci', 'colour', 'side', 'move','game_state_after', 'game_state_before', 'eval_type_after', 'eval_after', 'eval_type_before', 'eval_before'])
+        df = get_moves(evaluations, uci_moves, san_moves)
         df['url'] = url
         df['game_date'] = date
         df.game_date = df.game_date.astype('datetime64[us]')
         blunders_dfs.append(df)
-
     blunders_df = pd.concat(blunders_dfs)
+    blunders_df['flag_checkmate'] = blunders_df.san.apply(lambda x: 1 if x[-1] in '#' else 0)
+    blunders_df['flag_check'] = blunders_df.san.apply(lambda x: 1 if x[-1] in '#+' else 0)
+    blunders_df = blunders_df[[
+            'game_date',
+            'url',
+            'san', 
+            'uci', 
+            'colour', 
+            'side', 
+            'move',
+            'game_state_after', 
+            'game_state_before', 
+            'eval_type_after', 
+            'eval_after',
+            'material_eval_after', 
+            'eval_type_before', 
+            'eval_before', 
+            'material_eval_before', 
+            'flag_blunder',
+            'flag_checkmate',
+            'flag_check',
+            'flag_capture'
+            ]]
     table = pa.Table.from_pandas(blunders_df)
     parquet_buffer = io.BytesIO()
     pq.write_table(table, parquet_buffer)
