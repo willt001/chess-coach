@@ -195,7 +195,7 @@ def handler(event, context):
             'flag_check',
             'flag_capture'
             ]]
-    table = pa.Table.from_pandas(blunders_df)
+    table = pa.Table.from_pandas(blunders_df, preserve_index=False)
     parquet_buffer = io.BytesIO()
     pq.write_table(table, parquet_buffer)
     s3_client.put_object(Bucket=bucket_name, Key=output_object_key, Body=parquet_buffer.getvalue())
