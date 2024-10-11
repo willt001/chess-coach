@@ -14,7 +14,8 @@ glue_crawler_config = json.loads(GLUE_CRAWLER_CONFIG)
 @dag(
     start_date=pendulum.datetime(2024, 9, 1, 1),
     schedule_interval=relativedelta(months=1),
-    catchup=False
+    catchup=False,
+    max_active_runs=1
     )
 def chess_glue_crawler():
 
