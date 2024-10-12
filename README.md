@@ -7,13 +7,8 @@ The pipeline is hosted on AWS using serverless architecture: S3 for storage, Lam
 ```bash
 docker compose up -d --build
 ```
-
 ## ETL DAG
 ![image](https://github.com/user-attachments/assets/5c9f4945-088e-4cbd-abb6-6c6399822520)
-
-## Glue Crawler DAG
-
-![image](https://github.com/user-attachments/assets/4b719b05-c751-4a46-8b09-5646c99082a6)
 
 ## extract_games Task
 Extracting data from Chess.com's official API for a given month and user. Each extract is partitioned into parquet files of 50 records each and temporarily stored on the local file system of the Airflow worker (with Apache Hive style partitioning on 'month'). 
@@ -51,11 +46,18 @@ Typically, machine learning and advanced metrics such as expected win probabilit
     * -4: Forced checkmate for black.
 * A blunder is a move which shifts the game state by more than 1, or shifts the Stockfish evaluation by more than 3.
 
+## Glue Crawler DAG
+
+![image](https://github.com/user-attachments/assets/4b719b05-c751-4a46-8b09-5646c99082a6)
+
 ## crawl_s3 Task
 
 Running the AWS Glue Crawler to update the data catalog with the new partitions added to the data lake in S3, the crawl_s3 task is skipped if a crawler is already running (from a parallel DagRun). The latest data will then be available to query in Athena.
 
-# Lambda Function
+## AWS Architecture
+![image](https://github.com/user-attachments/assets/a5bb6684-46ac-477a-8815-63ba1739c318)
+
+## Lambda Function
 
 The code which runs on AWS Lambda is the 'handler' function found in the lambda-docker-image/lambda_function.py file. The value for the 'event' argument will be the JSON value we pass to the 'payload' argument of LambdaInvokeFunctionOperator in Airflow.
 
