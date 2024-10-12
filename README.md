@@ -1,5 +1,5 @@
 # Chess coach data pipeline
-Anyone who regularly plays chess on Chess.com may know that they have excellent tools for analysing individual chess games such as game review and analysis board. However, there are no tools for analysing trends or aggregated game data, this is the problem I have solved with this project!
+Anyone who regularly plays chess on Chess.com may know that they have excellent tools for analysing individual chess games such as game review and analysis board. However, there are no tools for analysing trends or aggregated game data, this is the problem I have solved with this project! Sample data in both csv and parquet format can be found in the sample_data directory.
 
 I have created a pipeline which ingests games data from Chess.com's public API and analyses the games data with chess engine Stockfish 17 to obtain a rich dataset of moves, with valuable attributes such as flag_blunder, flag_capture, flag_check, etc.
 
