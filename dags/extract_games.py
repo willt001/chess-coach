@@ -7,12 +7,55 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 
-def schema_check(game_json: dict) -> bool:
-    keys_required = ['pgn', 'time_control', 'rated', 'fen', 'time_class', 'url']
-    for key in keys_required:
-        if key not in game_json:
-            return False
-    return True
+def schema_check(game_json: dict) -> None:
+    expected_keys = set([
+        'url',
+        'pgn',
+        'time_control',
+        'end_time',
+        'rated',
+        'tcn',
+        'uuid',
+        'initial_setup',
+        'fen',
+        'time_class',
+        'rules',
+        'white',
+        'black',
+        'eco'
+    ])
+    actual_keys = set(game_json.keys())
+    missing_keys = expected_keys - actual_keys
+    assert missing_keys == set(), f'Missing Keys: {missing_keys}'
+
+def types_check(game_json: dict) -> None:
+    expected_types = {
+        "url": str,
+        "pgn": str,
+        "time_control": str,
+        "end_time": int,
+        "rated": bool,
+        "tcn": str,
+        "uuid": str,
+        "initial_setup": str,
+        "fen": str,
+        "time_class": str,
+        "rules": str,
+        "white": dict,
+        "black": dict,
+        "eco": str
+    }
+    for key_name, data in game_json.items():
+        if key_name in expected_types:
+            expected_type = expected_types[key_name]
+            assert isinstance(data, expected_type), f'key {key_name} should be {expected_type}, not {type(data)}'
+
+def nullability_check(game_json: dict) -> None:
+    non_null_keys = [
+        'url'
+    ]
+    for key_name in non_null_keys:
+        assert game_json[key_name] is not None, f'Key {key_name} cannot be null.'
 
 def get_monthly_games(date: datetime, username: str = 'willlt001') -> None:
     '''Takes in a date and Chess.com username and outputs a csv with all Chess.com games in that month'''
@@ -30,9 +73,10 @@ def get_monthly_games(date: datetime, username: str = 'willlt001') -> None:
     if not games:
         return []
     game_list = []
-    for i, game in enumerate(games):
-        if not schema_check(game):
-            raise AirflowException(f'Schema Check for game {i}')
+    for game in games:
+        schema_check(game)
+        types_check(game)
+        nullability_check(game)
         # PGN is a standard plain text format for recording chess games
         pgn = game.get('pgn').split('\n')
         if len(pgn) < 23:
