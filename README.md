@@ -55,7 +55,7 @@ Typically, machine learning and advanced metrics such as expected win probabilit
 Running the AWS Glue Crawler to update the data catalog with the new partitions added to the data lake in S3, the crawl_s3 task is skipped if a crawler is already running (from a parallel DagRun). The latest data will then be available to query in Athena.
 
 ## AWS Architecture
-![image](https://github.com/user-attachments/assets/a5bb6684-46ac-477a-8815-63ba1739c318)
+![chess etl flow](https://github.com/user-attachments/assets/a6f7f41d-5f09-4f75-ad0a-0c556b8ac54f)
 
 ## Lambda Function
 
